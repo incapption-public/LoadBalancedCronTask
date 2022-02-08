@@ -36,6 +36,7 @@ class DistributedCronjobTest extends TestCase
     public function local_job_every_minute()
     {
         $response = (new DistributedCronjob())
+            ->mockTestEnvironment(null, '2022-02-08 20:25:02')
             ->local()
             ->job((new DefaultCronjob()))
             ->everyMinute()
@@ -50,7 +51,7 @@ class DistributedCronjobTest extends TestCase
     public function local_job_every_five_minute()
     {
         $response = (new DistributedCronjob())
-            ->mockTestEnvironment(null, '2022-02-08 20:25:15')
+            ->mockTestEnvironment(null, '2022-02-08 20:25:02')
             ->local()
             ->job((new DefaultCronjob()))
             ->everyFiveMinutes()
@@ -77,6 +78,36 @@ class DistributedCronjobTest extends TestCase
     /** @test
      * @throws DistributedCronjobException
      */
+    public function local_job_hourly()
+    {
+        $response = (new DistributedCronjob())
+            ->mockTestEnvironment(null, '2022-02-08 20:00:21', 30)
+            ->local()
+            ->job((new DefaultCronjob()))
+            ->hourly()
+            ->run();
+
+        $this->assertEquals(true, $response, 'Assert the job will run');
+    }
+
+    /** @test
+     * @throws DistributedCronjobException
+     */
+    public function local_job_hourly_not_in_time()
+    {
+        $response = (new DistributedCronjob())
+            ->mockTestEnvironment(null, '2022-02-08 20:01:00', 0)
+            ->local()
+            ->job((new DefaultCronjob()))
+            ->hourly()
+            ->run();
+
+        $this->assertEquals(false, $response, 'Assert the job will not run');
+    }
+
+    /** @test
+     * @throws DistributedCronjobException
+     */
     public function distributed_job_every_minute_table_does_not_exist()
     {
         file_put_contents('tests/SqliteDatabase/test.db', '');
@@ -84,7 +115,7 @@ class DistributedCronjobTest extends TestCase
         try
         {
             $response = (new DistributedCronjob())
-                ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 20:26:15', 0)
+                ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 20:26:00', 0)
                 ->distributed()
                 ->job((new DefaultCronjob()))
                 ->everyMinute()
@@ -102,7 +133,7 @@ class DistributedCronjobTest extends TestCase
     public function distributed_job_every_minute()
     {
         $response = (new DistributedCronjob())
-            ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 20:26:15', 0)
+            ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 20:26:30', 30)
             ->distributed()
             ->job((new DefaultCronjob()))
             ->everyMinute()
@@ -117,10 +148,40 @@ class DistributedCronjobTest extends TestCase
     public function distributed_job_every_five_minutes_not_in_time()
     {
         $response = (new DistributedCronjob())
-            ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 20:26:15', 0)
+            ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 20:26:00', 0)
             ->distributed()
             ->job((new DefaultCronjob()))
             ->everyFiveMinutes()
+            ->run();
+
+        $this->assertEquals(false, $response, 'Assert the job will not run');
+    }
+
+    /** @test
+     * @throws DistributedCronjobException
+     */
+    public function distributed_job_hourly()
+    {
+        $response = (new DistributedCronjob())
+            ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 20:00:00', 0)
+            ->distributed()
+            ->job((new DefaultCronjob()))
+            ->hourly()
+            ->run();
+
+        $this->assertEquals(true, $response, 'Assert the job will run');
+    }
+
+    /** @test
+     * @throws DistributedCronjobException
+     */
+    public function distributed_job_hourly_not_in_time()
+    {
+        $response = (new DistributedCronjob())
+            ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 20:01:00', 0)
+            ->distributed()
+            ->job((new DefaultCronjob()))
+            ->hourly()
             ->run();
 
         $this->assertEquals(false, $response, 'Assert the job will not run');

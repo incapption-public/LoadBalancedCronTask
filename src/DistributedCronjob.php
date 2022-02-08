@@ -11,6 +11,11 @@ use MyCLabs\Enum\Enum;
 class DistributedCronjob
 {
     /**
+     * @var bool
+     */
+    private $isTest = false;
+
+    /**
      * Seconds waiting before releasing the lock for the job
      * @var int
      */
@@ -119,6 +124,8 @@ class DistributedCronjob
 
         $this->asyncBuffer = $asyncBuffer;
 
+        $this->isTest = true;
+
         return $this;
     }
 
@@ -197,9 +204,59 @@ class DistributedCronjob
         return $this;
     }
 
+    public function everyTenMinutes(): DistributedCronjob
+    {
+        $currentMinute = intval($this->dateTime->format('i'));
+
+        if($currentMinute % 10 === 0)
+        {
+            self::setInTime(true);
+        }
+
+        return $this;
+    }
+
+    public function everyFifteenMinutes(): DistributedCronjob
+    {
+        $currentMinute = intval($this->dateTime->format('i'));
+
+        if($currentMinute % 15 === 0)
+        {
+            self::setInTime(true);
+        }
+
+        return $this;
+    }
+
+    public function everyThirtyMinutes(): DistributedCronjob
+    {
+        $currentMinute = intval($this->dateTime->format('i'));
+
+        if($currentMinute % 30 === 0)
+        {
+            self::setInTime(true);
+        }
+
+        return $this;
+    }
+
+    public function hourly(): DistributedCronjob
+    {
+        $currentHour = intval($this->dateTime->format('H'));
+        $currentMinute = intval($this->dateTime->format('i'));
+
+        if(($currentHour >= 0 && $currentHour <= 23) && $currentMinute === 0)
+        {
+            self::setInTime(true);
+        }
+
+        return $this;
+    }
+
     public function run(): bool
     {
-        if(self::isInTime() === false)
+
+        if(self::isInTime() === false || intval($this->dateTime->format('s')) > $this->asyncBuffer)
             return false;
 
         if ($this->type->getValue() === ProcessType::LOCAL()->getValue())
@@ -239,8 +296,11 @@ class DistributedCronjob
             // delete job from dcj_running_cronjobs
             try
             {
-                // wait 30 seconds
-                sleep($this->asyncBuffer);
+                // wait some seconds before deleting the entry from the database and "unlock" it
+                if ($this->isTest === false)
+                {
+                    sleep($this->asyncBuffer);
+                }
 
                 $query = $this->pdo->prepare('DELETE FROM dcj_running_cronjobs WHERE running_job = :job_name');
                 $query->execute([
