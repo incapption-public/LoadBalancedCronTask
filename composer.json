@@ -1,0 +1,33 @@
+{
+  "name": "incapption/distributed-cronjobs",
+  "description": "Distributes cronjobs among identical webservers.",
+  "type": "library",
+  "license": "MIT",
+  "minimum-stability": "stable",
+  "authors": [
+    {
+      "name": "incapption",
+      "email": "tastenhelden@gmail.com"
+    }
+  ],
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/incapption/DistributedCronjobs"
+    }
+  ],
+  "require": {
+    "php": ">=7.2",
+    "myclabs/php-enum": "^1.8",
+    "ext-json": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "Incapption\\DistributedCronjobs\\": "src/",
+      "Incapption\\DistributedCronjobs\\Tests\\": "tests/"
+    }
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9.5"
+  }
+}
