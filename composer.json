@@ -1,6 +1,6 @@
 {
-  "name": "incapption/distributed-cronjobs",
-  "description": "Distributes cronjobs among identical webservers.",
+  "name": "incapption/distributed-cronjob",
+  "description": "Distributes cronjobs among identical webservers with a remote mysql database.",
   "type": "library",
   "license": "MIT",
   "minimum-stability": "stable",
@@ -13,18 +13,20 @@
   "repositories": [
     {
       "type": "vcs",
-      "url": "https://github.com/incapption/DistributedCronjobs"
+      "url": "https://github.com/incapption/DistributedCronjob"
     }
   ],
   "require": {
     "php": ">=7.2",
     "myclabs/php-enum": "^1.8",
-    "ext-json": "*"
+    "ext-json": "*",
+    "ext-pdo": "*",
+    "ext-pdo_mysql": "*"
   },
   "autoload": {
     "psr-4": {
-      "Incapption\\DistributedCronjobs\\": "src/",
-      "Incapption\\DistributedCronjobs\\Tests\\": "tests/"
+      "Incapption\\DistributedCronjob\\": "src/",
+      "Incapption\\DistributedCronjob\\Tests\\": "tests/"
     }
   },
   "require-dev": {
