@@ -1,6 +1,6 @@
 {
   "name": "incapption/distributed-cronjob",
-  "description": "Distributes cronjobs among identical webservers with a remote mysql database.",
+  "description": "Distributes cron jobs among identical webservers based on a single remote mysql database.",
   "type": "library",
   "license": "MIT",
   "minimum-stability": "stable",

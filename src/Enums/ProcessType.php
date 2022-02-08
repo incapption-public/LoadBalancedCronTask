@@ -1,6 +1,6 @@
 <?php
 
-namespace Incapption\DistributedCronjobs\Enums;
+namespace Incapption\DistributedCronjob\Enums;
 
 use MyCLabs\Enum\Enum;
 
