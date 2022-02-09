@@ -1,8 +1,8 @@
 <?php
 
-namespace Incapption\DistributedCronjob\Abstracts;
+namespace Incapption\LoadBalancedCronTask\Abstracts;
 
-abstract class DistributedCronjobWrapperAbstract
+abstract class CronTaskAbstract
 {
     /**
      * @var ?string

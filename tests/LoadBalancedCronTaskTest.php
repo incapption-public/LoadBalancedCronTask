@@ -1,13 +1,13 @@
 <?php
 
-namespace Incapption\DistributedCronjob\Tests;
+namespace Incapption\LoadBalancedCronTask\Tests;
 
-use Incapption\DistributedCronjob\DistributedCronjob;
-use Incapption\DistributedCronjob\Exceptions\DistributedCronjobException;
-use Incapption\DistributedCronjob\Tests\Cronjobs\DefaultCronjob;
+use Incapption\LoadBalancedCronTask\LoadBalancedCronTask;
+use Incapption\LoadBalancedCronTask\Exceptions\LoadBalancedCronTaskException;
+use Incapption\LoadBalancedCronTask\Tests\CronTasks\DefaultCronTask;
 use PHPUnit\Framework\TestCase;
 
-class DistributedCronjobTest extends TestCase
+class LoadBalancedCronTaskTest extends TestCase
 {
     public function setUp(): void
     {
@@ -35,10 +35,10 @@ class DistributedCronjobTest extends TestCase
     /** @test */
     public function local_job_every_minute()
     {
-        $response = (new DistributedCronjob())
+        $response = (new LoadBalancedCronTask())
             ->mockTestEnvironment(null, '2022-02-08 20:25:02')
             ->local()
-            ->job((new DefaultCronjob()))
+            ->job((new DefaultCronTask()))
             ->everyMinute()
             ->run();
 
@@ -46,14 +46,14 @@ class DistributedCronjobTest extends TestCase
     }
 
     /** @test
-     * @throws DistributedCronjobException
+     * @throws LoadBalancedCronTaskException
      */
     public function local_job_every_five_minute()
     {
-        $response = (new DistributedCronjob())
+        $response = (new LoadBalancedCronTask())
             ->mockTestEnvironment(null, '2022-02-08 20:25:02')
             ->local()
-            ->job((new DefaultCronjob()))
+            ->job((new DefaultCronTask()))
             ->everyFiveMinutes()
             ->run();
 
@@ -61,14 +61,14 @@ class DistributedCronjobTest extends TestCase
     }
 
     /** @test
-     * @throws DistributedCronjobException
+     * @throws LoadBalancedCronTaskException
      */
     public function local_job_every_five_minute_not_in_time()
     {
-        $response = (new DistributedCronjob())
+        $response = (new LoadBalancedCronTask())
             ->mockTestEnvironment(null, '2022-02-08 20:26:15')
             ->local()
-            ->job((new DefaultCronjob()))
+            ->job((new DefaultCronTask()))
             ->everyFiveMinutes()
             ->run();
 
@@ -76,14 +76,14 @@ class DistributedCronjobTest extends TestCase
     }
 
     /** @test
-     * @throws DistributedCronjobException
+     * @throws LoadBalancedCronTaskException
      */
     public function local_job_hourly()
     {
-        $response = (new DistributedCronjob())
+        $response = (new LoadBalancedCronTask())
             ->mockTestEnvironment(null, '2022-02-08 20:00:21', 30)
             ->local()
-            ->job((new DefaultCronjob()))
+            ->job((new DefaultCronTask()))
             ->hourly()
             ->run();
 
@@ -91,14 +91,14 @@ class DistributedCronjobTest extends TestCase
     }
 
     /** @test
-     * @throws DistributedCronjobException
+     * @throws LoadBalancedCronTaskException
      */
     public function local_job_hourly_not_in_time()
     {
-        $response = (new DistributedCronjob())
+        $response = (new LoadBalancedCronTask())
             ->mockTestEnvironment(null, '2022-02-08 20:01:00', 0)
             ->local()
-            ->job((new DefaultCronjob()))
+            ->job((new DefaultCronTask()))
             ->hourly()
             ->run();
 
@@ -106,7 +106,7 @@ class DistributedCronjobTest extends TestCase
     }
 
     /** @test
-     * @throws DistributedCronjobException
+     * @throws LoadBalancedCronTaskException
      */
     public function distributed_job_every_minute_table_does_not_exist()
     {
@@ -114,28 +114,28 @@ class DistributedCronjobTest extends TestCase
 
         try
         {
-            $response = (new DistributedCronjob())
+            $response = (new LoadBalancedCronTask())
                 ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 20:26:00', 0)
                 ->distributed()
-                ->job((new DefaultCronjob()))
+                ->job((new DefaultCronTask()))
                 ->everyMinute()
                 ->run();
         }
-        catch(DistributedCronjobException $e)
+        catch(LoadBalancedCronTaskException $e)
         {
             $this->assertStringContainsString('no such table: dcj_running_cronjobs', $e->getMessage(), 'Assert the job will not run because dcj_running_cronjobs table does not exist');
         }
     }
 
     /** @test
-     * @throws DistributedCronjobException
+     * @throws LoadBalancedCronTaskException
      */
     public function distributed_job_every_minute()
     {
-        $response = (new DistributedCronjob())
+        $response = (new LoadBalancedCronTask())
             ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 20:26:30', 30)
             ->distributed()
-            ->job((new DefaultCronjob()))
+            ->job((new DefaultCronTask()))
             ->everyMinute()
             ->run();
 
@@ -143,14 +143,14 @@ class DistributedCronjobTest extends TestCase
     }
 
     /** @test
-     * @throws DistributedCronjobException
+     * @throws LoadBalancedCronTaskException
      */
     public function distributed_job_every_five_minutes_not_in_time()
     {
-        $response = (new DistributedCronjob())
+        $response = (new LoadBalancedCronTask())
             ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 20:26:00', 0)
             ->distributed()
-            ->job((new DefaultCronjob()))
+            ->job((new DefaultCronTask()))
             ->everyFiveMinutes()
             ->run();
 
@@ -158,14 +158,14 @@ class DistributedCronjobTest extends TestCase
     }
 
     /** @test
-     * @throws DistributedCronjobException
+     * @throws LoadBalancedCronTaskException
      */
     public function distributed_job_hourly()
     {
-        $response = (new DistributedCronjob())
+        $response = (new LoadBalancedCronTask())
             ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 20:00:00', 0)
             ->distributed()
-            ->job((new DefaultCronjob()))
+            ->job((new DefaultCronTask()))
             ->hourly()
             ->run();
 
@@ -173,14 +173,14 @@ class DistributedCronjobTest extends TestCase
     }
 
     /** @test
-     * @throws DistributedCronjobException
+     * @throws LoadBalancedCronTaskException
      */
     public function distributed_job_hourly_not_in_time()
     {
-        $response = (new DistributedCronjob())
+        $response = (new LoadBalancedCronTask())
             ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 20:01:00', 0)
             ->distributed()
-            ->job((new DefaultCronjob()))
+            ->job((new DefaultCronTask()))
             ->hourly()
             ->run();
 

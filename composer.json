@@ -1,5 +1,5 @@
 {
-  "name": "incapption/distributed-cronjob",
+  "name": "incapption/load-balanced-cron-task",
   "description": "Distributes cron jobs among identical webservers based on a single remote mysql database.",
   "type": "library",
   "license": "MIT",
@@ -13,7 +13,7 @@
   "repositories": [
     {
       "type": "vcs",
-      "url": "https://github.com/incapption/DistributedCronjob"
+      "url": "https://github.com/incapption/LoadBalancedCronTask"
     }
   ],
   "require": {
@@ -25,8 +25,8 @@
   },
   "autoload": {
     "psr-4": {
-      "Incapption\\DistributedCronjob\\": "src/",
-      "Incapption\\DistributedCronjob\\Tests\\": "tests/"
+      "Incapption\\LoadBalancedCronTask\\": "src/",
+      "Incapption\\LoadBalancedCronTask\\Tests\\": "tests/"
     }
   },
   "require-dev": {

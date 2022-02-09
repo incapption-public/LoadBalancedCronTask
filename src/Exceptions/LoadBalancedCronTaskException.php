@@ -1,11 +1,11 @@
 <?php
 
-namespace Incapption\DistributedCronjob\Exceptions;
+namespace Incapption\LoadBalancedCronTask\Exceptions;
 
 use Exception;
 use Throwable;
 
-class DistributedCronjobException extends Exception
+class LoadBalancedCronTaskException extends Exception
 {
     public function __construct($message, $code = 0, Throwable $previous = null)
     {

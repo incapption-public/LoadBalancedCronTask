@@ -1,14 +1,14 @@
 <?php
 
-namespace Incapption\DistributedCronjob;
+namespace Incapption\LoadBalancedCronTask;
 
 use DateTime;
-use Incapption\DistributedCronjob\Abstracts\DistributedCronjobWrapperAbstract;
-use Incapption\DistributedCronjob\Enums\ProcessType;
-use Incapption\DistributedCronjob\Exceptions\DistributedCronjobException;
+use Incapption\LoadBalancedCronTask\Abstracts\CronTaskAbstract;
+use Incapption\LoadBalancedCronTask\Enums\ProcessType;
+use Incapption\LoadBalancedCronTask\Exceptions\LoadBalancedCronTaskException;
 use MyCLabs\Enum\Enum;
 
-class DistributedCronjob
+class LoadBalancedCronTask
 {
     /**
      * @var bool
@@ -32,7 +32,7 @@ class DistributedCronjob
     private $timezone;
 
     /**
-     * @var ?DistributedCronjobWrapperAbstract
+     * @var ?CronTaskAbstract
      */
     private $job;
 
@@ -52,7 +52,7 @@ class DistributedCronjob
     private $pdo = null;
 
     /**
-     * @throws DistributedCronjobException
+     * @throws LoadBalancedCronTaskException
      */
     public function __construct()
     {
@@ -76,7 +76,7 @@ class DistributedCronjob
 
     /**
      * @param string $dateTime
-     * @throws DistributedCronjobException
+     * @throws LoadBalancedCronTaskException
      */
     private function setDateTime(string $dateTime = 'now'): void
     {
@@ -85,12 +85,12 @@ class DistributedCronjob
         }
         catch(\Exception $e)
         {
-            throw new DistributedCronjobException($e->getMessage());
+            throw new LoadBalancedCronTaskException($e->getMessage());
         }
     }
 
     /**
-     * @throws DistributedCronjobException
+     * @throws LoadBalancedCronTaskException
      */
     private function checkMysqlTableExists(): void
     {
@@ -100,7 +100,7 @@ class DistributedCronjob
         }
         catch (\PDOException $e)
         {
-            throw new DistributedCronjobException($e->getMessage());
+            throw new LoadBalancedCronTaskException($e->getMessage());
         }
     }
 
@@ -114,7 +114,7 @@ class DistributedCronjob
             }
             catch(\PDOException $e)
             {
-                throw new DistributedCronjobException($e->getMessage());
+                throw new LoadBalancedCronTaskException($e->getMessage());
             }
 
             self::checkMysqlTableExists();
@@ -131,7 +131,7 @@ class DistributedCronjob
 
     /**
      * @param string $timezone
-     * @throws DistributedCronjobException
+     * @throws LoadBalancedCronTaskException
      */
     public function setTimezone(string $timezone): void
     {
@@ -139,14 +139,14 @@ class DistributedCronjob
         self::setDateTime();
     }
 
-    public function local(): DistributedCronjob
+    public function local(): LoadBalancedCronTask
     {
         $this->type = ProcessType::LOCAL();
 
         return $this;
     }
 
-    public function distributed(): DistributedCronjob
+    public function distributed(): LoadBalancedCronTask
     {
         $this->type = ProcessType::DISTRIBUTED();
 
@@ -160,9 +160,9 @@ class DistributedCronjob
      * @param string $database
      * @param int $port
      * @return $this
-     * @throws DistributedCronjobException
+     * @throws LoadBalancedCronTaskException
      */
-    public function mysql(string $host, string $user, string $password, string $database, int $port = 3306): DistributedCronjob
+    public function mysql(string $host, string $user, string $password, string $database, int $port = 3306): LoadBalancedCronTask
     {
         try {
             $this->pdo = new \PDO('mysql:host='.$host.';port='.$port.';dbname='.$database, $user, $password);
@@ -171,7 +171,7 @@ class DistributedCronjob
         }
         catch(\PDOException $e)
         {
-            throw new DistributedCronjobException($e->getMessage());
+            throw new LoadBalancedCronTaskException($e->getMessage());
         }
 
         self::checkMysqlTableExists();
@@ -179,20 +179,20 @@ class DistributedCronjob
         return $this;
     }
 
-    public function job(DistributedCronjobWrapperAbstract $job): DistributedCronjob
+    public function job(CronTaskAbstract $job): LoadBalancedCronTask
     {
         $this->job = $job;
 
         return $this;
     }
 
-    public function everyMinute(): DistributedCronjob
+    public function everyMinute(): LoadBalancedCronTask
     {
         self::setInTime(true);
         return $this;
     }
 
-    public function everyFiveMinutes(): DistributedCronjob
+    public function everyFiveMinutes(): LoadBalancedCronTask
     {
         $currentMinute = intval($this->dateTime->format('i'));
 
@@ -204,7 +204,7 @@ class DistributedCronjob
         return $this;
     }
 
-    public function everyTenMinutes(): DistributedCronjob
+    public function everyTenMinutes(): LoadBalancedCronTask
     {
         $currentMinute = intval($this->dateTime->format('i'));
 
@@ -216,7 +216,7 @@ class DistributedCronjob
         return $this;
     }
 
-    public function everyFifteenMinutes(): DistributedCronjob
+    public function everyFifteenMinutes(): LoadBalancedCronTask
     {
         $currentMinute = intval($this->dateTime->format('i'));
 
@@ -228,7 +228,7 @@ class DistributedCronjob
         return $this;
     }
 
-    public function everyThirtyMinutes(): DistributedCronjob
+    public function everyThirtyMinutes(): LoadBalancedCronTask
     {
         $currentMinute = intval($this->dateTime->format('i'));
 
@@ -240,7 +240,7 @@ class DistributedCronjob
         return $this;
     }
 
-    public function hourly(): DistributedCronjob
+    public function hourly(): LoadBalancedCronTask
     {
         $currentHour = intval($this->dateTime->format('H'));
         $currentMinute = intval($this->dateTime->format('i'));
@@ -268,7 +268,7 @@ class DistributedCronjob
             // check if job has a name
             if (empty($this->job->getName()) || !is_string($this->job->getName()))
             {
-                throw new DistributedCronjobException('This job has no name. A name must be set.');
+                throw new LoadBalancedCronTaskException('This job has no name. A name must be set.');
             }
 
             // try to insert the job into dcj_running_cronjobs
@@ -288,7 +288,7 @@ class DistributedCronjob
                     return false;
                 }
 
-                throw new DistributedCronjobException($e->getMessage());
+                throw new LoadBalancedCronTaskException($e->getMessage());
             }
 
             $jobResponse = $this->job->job();
@@ -309,7 +309,7 @@ class DistributedCronjob
             }
             catch(\PDOException $e)
             {
-                throw new DistributedCronjobException($e->getMessage());
+                throw new LoadBalancedCronTaskException($e->getMessage());
             }
 
             return $jobResponse;
