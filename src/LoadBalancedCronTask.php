@@ -16,7 +16,7 @@ class LoadBalancedCronTask
     private $isTest = false;
 
     /**
-     * Seconds waiting before releasing the lock for the job
+     * Seconds waiting before releasing the lock for the task after the task is finished
      * @var int
      */
     private $asyncBuffer = 30;
@@ -34,7 +34,7 @@ class LoadBalancedCronTask
     /**
      * @var ?CronTaskAbstract
      */
-    private $job;
+    private $task;
 
     /**
      * @var bool
@@ -57,7 +57,7 @@ class LoadBalancedCronTask
     public function __construct()
     {
         $this->timezone = 'UTC';
-        $this->job = null;
+        $this->task = null;
         $this->inTime = false;
 
         self::setDateTime();
@@ -94,9 +94,9 @@ class LoadBalancedCronTask
      */
     private function checkMysqlTableExists(): void
     {
-        // check if dcj_cronjob table exists in database
+        // check if lbct_tasks table exists in database
         try {
-            $this->pdo->query("SELECT * FROM dcj_running_cronjobs LIMIT 1");
+            $this->pdo->query("SELECT * FROM lbct_tasks LIMIT 1");
         }
         catch (\PDOException $e)
         {
@@ -179,9 +179,9 @@ class LoadBalancedCronTask
         return $this;
     }
 
-    public function job(CronTaskAbstract $job): LoadBalancedCronTask
+    public function task(CronTaskAbstract $task): LoadBalancedCronTask
     {
-        $this->job = $job;
+        $this->task = $task;
 
         return $this;
     }
@@ -261,21 +261,21 @@ class LoadBalancedCronTask
 
         if ($this->type->getValue() === ProcessType::LOCAL()->getValue())
         {
-            return $this->job->job();
+            return $this->task->task();
         }
         else if ($this->type->getValue() === ProcessType::DISTRIBUTED()->getValue())
         {
-            // check if job has a name
-            if (empty($this->job->getName()) || !is_string($this->job->getName()))
+            // check if task has a name
+            if (empty($this->task->getName()) || !is_string($this->task->getName()))
             {
-                throw new LoadBalancedCronTaskException('This job has no name. A name must be set.');
+                throw new LoadBalancedCronTaskException('This task has no name. A name must be set.');
             }
 
-            // try to insert the job into dcj_running_cronjobs
+            // try to insert the task into lbct_tasks
             try {
-                $query = $this->pdo->prepare('INSERT INTO dcj_running_cronjobs (running_job) VALUES (:job_name)');
+                $query = $this->pdo->prepare('INSERT INTO lbct_tasks (task_running) VALUES (:task_name)');
                 $query->execute([
-                    'job_name' => $this->job->getName()
+                    'task_name' => $this->task->getName()
                 ]);
             }
             catch(\PDOException $e)
@@ -291,9 +291,9 @@ class LoadBalancedCronTask
                 throw new LoadBalancedCronTaskException($e->getMessage());
             }
 
-            $jobResponse = $this->job->job();
+            $taskResponse = $this->task->task();
 
-            // delete job from dcj_running_cronjobs
+            // delete task from lbct_tasks
             try
             {
                 // wait some seconds before deleting the entry from the database and "unlock" it
@@ -302,9 +302,9 @@ class LoadBalancedCronTask
                     sleep($this->asyncBuffer);
                 }
 
-                $query = $this->pdo->prepare('DELETE FROM dcj_running_cronjobs WHERE running_job = :job_name');
+                $query = $this->pdo->prepare('DELETE FROM lbct_tasks WHERE task_running = :task_name');
                 $query->execute([
-                    'job_name' => $this->job->getName()
+                    'task_name' => $this->task->getName()
                 ]);
             }
             catch(\PDOException $e)
@@ -312,7 +312,7 @@ class LoadBalancedCronTask
                 throw new LoadBalancedCronTaskException($e->getMessage());
             }
 
-            return $jobResponse;
+            return $taskResponse;
         }
 
         return false;

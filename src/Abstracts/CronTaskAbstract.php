@@ -15,5 +15,5 @@ abstract class CronTaskAbstract
     {
         return $this->name;
     }
-    public abstract function job(): bool;
+    public abstract function task(): bool;
 }

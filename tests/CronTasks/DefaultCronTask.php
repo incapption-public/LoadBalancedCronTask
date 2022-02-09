@@ -11,7 +11,7 @@ class DefaultCronTask extends CronTaskAbstract
         $this->name = 'DefaultJob';
     }
 
-    public function job(): bool
+    public function task(): bool
     {
         return true;
     }
