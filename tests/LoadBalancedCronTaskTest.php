@@ -9,17 +9,29 @@ use PHPUnit\Framework\TestCase;
 
 class LoadBalancedCronTaskTest extends TestCase
 {
+    /**
+     * @var string
+     */
+    private $sqlitedbPath;
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->sqlitedbPath = 'tests/SqliteDatabase/test.db';
+        $this->sqlitedb = 'sqlite:tests/SqliteDatabase/test.db';
+    }
+
     public function setUp(): void
     {
-        file_put_contents('tests/SqliteDatabase/test.db', '');
+        file_put_contents($this->sqlitedbPath, '');
 
-        $pdo = new \PDO('sqlite:tests/SqliteDatabase/test.db');
+        $pdo = new \PDO($this->sqlitedb);
         $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         $pdo->query("
             CREATE TABLE IF NOT EXISTS `lbct_tasks` (
             `unique_hash` varchar(32) NOT NULL,
             `task_running` varchar(256),
-            `timing` datetime,
+            `date_created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
             `worker` varchar(256),
             PRIMARY KEY (`unique_hash`)
             );
@@ -28,9 +40,9 @@ class LoadBalancedCronTaskTest extends TestCase
 
     public function tearDown(): void
     {
-        if (file_exists('tests/SqliteDatabase/test.db'))
+        if (file_exists($this->sqlitedbPath))
         {
-            unlink('tests/SqliteDatabase/test.db');
+            unlink($this->sqlitedbPath);
         }
     }
 
@@ -112,12 +124,12 @@ class LoadBalancedCronTaskTest extends TestCase
      */
     public function distributed_task_every_minute_table_does_not_exist()
     {
-        file_put_contents('tests/SqliteDatabase/test.db', '');
+        file_put_contents($this->sqlitedbPath, '');
 
         try
         {
             $response = (new LoadBalancedCronTask())
-                ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 20:26:00')
+                ->mockTestEnvironment($this->sqlitedb, '2022-02-08 20:26:00')
                 ->distributed()
                 ->task((new DefaultCronTask()))
                 ->everyMinute()
@@ -135,7 +147,7 @@ class LoadBalancedCronTaskTest extends TestCase
     public function distributed_task_every_minute()
     {
         $response = (new LoadBalancedCronTask())
-            ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 20:26:30')
+            ->mockTestEnvironment($this->sqlitedb, '2022-02-08 20:26:30')
             ->distributed()
             ->task((new DefaultCronTask()))
             ->everyMinute()
@@ -150,7 +162,7 @@ class LoadBalancedCronTaskTest extends TestCase
     public function distributed_task_every_five_minutes_not_in_time()
     {
         $response = (new LoadBalancedCronTask())
-            ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 20:26:00')
+            ->mockTestEnvironment($this->sqlitedb, '2022-02-08 20:26:00')
             ->distributed()
             ->task((new DefaultCronTask()))
             ->everyFiveMinutes()
@@ -165,7 +177,7 @@ class LoadBalancedCronTaskTest extends TestCase
     public function distributed_task_hourly()
     {
         $response = (new LoadBalancedCronTask())
-            ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 20:00:00')
+            ->mockTestEnvironment($this->sqlitedb, '2022-02-08 20:00:00')
             ->distributed()
             ->task((new DefaultCronTask()))
             ->hourly()
@@ -180,7 +192,7 @@ class LoadBalancedCronTaskTest extends TestCase
     public function distributed_task_hourly_not_in_time()
     {
         $response = (new LoadBalancedCronTask())
-            ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 20:01:00')
+            ->mockTestEnvironment($this->sqlitedb, '2022-02-08 20:01:00')
             ->distributed()
             ->task((new DefaultCronTask()))
             ->hourly()
@@ -195,7 +207,7 @@ class LoadBalancedCronTaskTest extends TestCase
     public function distributed_task_hourly_job_runs_just_once_with_multiple_nodes()
     {
         $response = (new LoadBalancedCronTask())
-            ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 10:00:13')
+            ->mockTestEnvironment($this->sqlitedb, '2022-02-08 10:00:13')
             ->distributed()
             ->task((new DefaultCronTask()))
             ->hourly()
@@ -205,7 +217,7 @@ class LoadBalancedCronTaskTest extends TestCase
 
 
         $response = (new LoadBalancedCronTask())
-            ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 10:00:13')
+            ->mockTestEnvironment($this->sqlitedb, '2022-02-08 10:00:13')
             ->distributed()
             ->task((new DefaultCronTask()))
             ->hourly()
@@ -215,7 +227,7 @@ class LoadBalancedCronTaskTest extends TestCase
 
 
         $response = (new LoadBalancedCronTask())
-            ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 10:00:16')
+            ->mockTestEnvironment($this->sqlitedb, '2022-02-08 10:00:16')
             ->distributed()
             ->task((new DefaultCronTask()))
             ->hourly()
@@ -225,7 +237,7 @@ class LoadBalancedCronTaskTest extends TestCase
 
 
         $response = (new LoadBalancedCronTask())
-            ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 10:00:41')
+            ->mockTestEnvironment($this->sqlitedb, '2022-02-08 10:00:41')
             ->distributed()
             ->task((new DefaultCronTask()))
             ->hourly()

@@ -32,7 +32,7 @@ It's used for locking running tasks, to make sure that only on app instance coul
 CREATE TABLE IF NOT EXISTS `lbct_tasks` (
 `unique_hash` varchar(32) NOT NULL,
 `task_running` varchar(256) NOT NULL,
-`timing` datetime NOT NULL,
+`date_created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 `worker` varchar(256),
 PRIMARY KEY (`unique_hash`)
 );

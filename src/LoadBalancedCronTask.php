@@ -278,11 +278,10 @@ class LoadBalancedCronTask
         {
             // try to insert the task into lbct_tasks
             try {
-                $query = $this->pdo->prepare('INSERT INTO lbct_tasks (unique_hash, task_running, timing, worker) VALUES (:unique_hash, :task_name, :timing, :worker)');
+                $query = $this->pdo->prepare('INSERT INTO lbct_tasks (unique_hash, task_running, worker) VALUES (:unique_hash, :task_name, :worker)');
                 $query->execute([
                     'unique_hash' => md5($this->task->getName().$this->dateTime->format('Y-m-d H:i:00')),
                     'task_name' => $this->task->getName(),
-                    'timing' => $this->dateTime->format('Y-m-d H:i:s'),
                     'worker' => self::getThisWorker()
                 ]);
             }
