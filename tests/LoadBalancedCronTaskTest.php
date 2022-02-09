@@ -17,9 +17,12 @@ class LoadBalancedCronTaskTest extends TestCase
         $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         $pdo->query("
             CREATE TABLE IF NOT EXISTS `lbct_tasks` (
-            `task_running` varchar(256) NOT NULL,
-            `date_created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (`task_running`));
+            `unique_hash` varchar(32) NOT NULL,
+            `task_running` varchar(256),
+            `timing` datetime,
+            `worker` varchar(256),
+            PRIMARY KEY (`unique_hash`)
+            );
         ");
     }
 
@@ -80,7 +83,7 @@ class LoadBalancedCronTaskTest extends TestCase
     public function local_task_hourly()
     {
         $response = (new LoadBalancedCronTask())
-            ->mockTestEnvironment(null, '2022-02-08 20:00:21', 30)
+            ->mockTestEnvironment(null, '2022-02-08 20:00:21')
             ->local()
             ->task((new DefaultCronTask()))
             ->hourly()
@@ -114,7 +117,7 @@ class LoadBalancedCronTaskTest extends TestCase
         try
         {
             $response = (new LoadBalancedCronTask())
-                ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 20:26:00', 0)
+                ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 20:26:00')
                 ->distributed()
                 ->task((new DefaultCronTask()))
                 ->everyMinute()
@@ -122,7 +125,7 @@ class LoadBalancedCronTaskTest extends TestCase
         }
         catch(LoadBalancedCronTaskException $e)
         {
-            $this->assertStringContainsString('no such table: lbct_tasks', $e->getMessage(), 'Assert the task will not run because dcj_running_cronjobs table does not exist');
+            $this->assertStringContainsString('no such table: lbct_tasks', $e->getMessage(), 'Assert the task will not run because lbct_tasks table does not exist');
         }
     }
 
@@ -132,7 +135,7 @@ class LoadBalancedCronTaskTest extends TestCase
     public function distributed_task_every_minute()
     {
         $response = (new LoadBalancedCronTask())
-            ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 20:26:30', 30)
+            ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 20:26:30')
             ->distributed()
             ->task((new DefaultCronTask()))
             ->everyMinute()
@@ -147,7 +150,7 @@ class LoadBalancedCronTaskTest extends TestCase
     public function distributed_task_every_five_minutes_not_in_time()
     {
         $response = (new LoadBalancedCronTask())
-            ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 20:26:00', 0)
+            ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 20:26:00')
             ->distributed()
             ->task((new DefaultCronTask()))
             ->everyFiveMinutes()
@@ -162,7 +165,7 @@ class LoadBalancedCronTaskTest extends TestCase
     public function distributed_task_hourly()
     {
         $response = (new LoadBalancedCronTask())
-            ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 20:00:00', 0)
+            ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 20:00:00')
             ->distributed()
             ->task((new DefaultCronTask()))
             ->hourly()
@@ -177,7 +180,52 @@ class LoadBalancedCronTaskTest extends TestCase
     public function distributed_task_hourly_not_in_time()
     {
         $response = (new LoadBalancedCronTask())
-            ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 20:01:00', 0)
+            ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 20:01:00')
+            ->distributed()
+            ->task((new DefaultCronTask()))
+            ->hourly()
+            ->run();
+
+        $this->assertEquals(false, $response, 'Assert the task will not run');
+    }
+
+    /** @test
+     * @throws LoadBalancedCronTaskException
+     */
+    public function distributed_task_hourly_job_runs_just_once_with_multiple_nodes()
+    {
+        $response = (new LoadBalancedCronTask())
+            ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 10:00:13')
+            ->distributed()
+            ->task((new DefaultCronTask()))
+            ->hourly()
+            ->run();
+
+        $this->assertEquals(true, $response, 'Assert the task will run');
+
+
+        $response = (new LoadBalancedCronTask())
+            ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 10:00:13')
+            ->distributed()
+            ->task((new DefaultCronTask()))
+            ->hourly()
+            ->run();
+
+        $this->assertEquals(false, $response, 'Assert the task will not run');
+
+
+        $response = (new LoadBalancedCronTask())
+            ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 10:00:16')
+            ->distributed()
+            ->task((new DefaultCronTask()))
+            ->hourly()
+            ->run();
+
+        $this->assertEquals(false, $response, 'Assert the task will not run');
+
+
+        $response = (new LoadBalancedCronTask())
+            ->mockTestEnvironment('sqlite:tests/SqliteDatabase/test.db', '2022-02-08 10:00:41')
             ->distributed()
             ->task((new DefaultCronTask()))
             ->hourly()

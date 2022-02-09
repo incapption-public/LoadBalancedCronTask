@@ -16,12 +16,6 @@ class LoadBalancedCronTask
     private $isTest = false;
 
     /**
-     * Seconds waiting before releasing the lock for the task after the task is finished
-     * @var int
-     */
-    private $asyncBuffer = 30;
-
-    /**
      * @var Enum
      */
     private $type;
@@ -73,7 +67,6 @@ class LoadBalancedCronTask
         $this->inTime = true;
     }
 
-
     /**
      * @param string $dateTime
      * @throws LoadBalancedCronTaskException
@@ -104,7 +97,21 @@ class LoadBalancedCronTask
         }
     }
 
-    public function mockTestEnvironment(?string $sqlite, string $dateTime = 'now', int $asyncBuffer = 2)
+    private function getThisWorker(): string
+    {
+        if (isset($_SERVER['REMOTE_ADDR']))
+        {
+            return $_SERVER['REMOTE_ADDR'];
+        }
+        else if (isset($_SERVER['SERVER_ADDR']))
+        {
+            return $_SERVER['SERVER_ADDR'];
+        }
+
+        return "undefined";
+    }
+
+    public function mockTestEnvironment(?string $sqlite, string $dateTime = 'now')
     {
         if(!is_null($sqlite))
         {
@@ -121,8 +128,6 @@ class LoadBalancedCronTask
         }
 
         self::setDateTime($dateTime);
-
-        $this->asyncBuffer = $asyncBuffer;
 
         $this->isTest = true;
 
@@ -255,8 +260,14 @@ class LoadBalancedCronTask
 
     public function run(): bool
     {
+        // check if task has a name
+        if (empty($this->task->getName()) || !is_string($this->task->getName()))
+        {
+            throw new LoadBalancedCronTaskException('This task has no name. A name must be set.');
+        }
 
-        if(self::isInTime() === false || intval($this->dateTime->format('s')) > $this->asyncBuffer)
+        // check if current task is in time
+        if(self::isInTime() === false)
             return false;
 
         if ($this->type->getValue() === ProcessType::LOCAL()->getValue())
@@ -265,54 +276,32 @@ class LoadBalancedCronTask
         }
         else if ($this->type->getValue() === ProcessType::DISTRIBUTED()->getValue())
         {
-            // check if task has a name
-            if (empty($this->task->getName()) || !is_string($this->task->getName()))
-            {
-                throw new LoadBalancedCronTaskException('This task has no name. A name must be set.');
-            }
-
             // try to insert the task into lbct_tasks
             try {
-                $query = $this->pdo->prepare('INSERT INTO lbct_tasks (task_running) VALUES (:task_name)');
+                $query = $this->pdo->prepare('INSERT INTO lbct_tasks (unique_hash, task_running, timing, worker) VALUES (:unique_hash, :task_name, :timing, :worker)');
                 $query->execute([
-                    'task_name' => $this->task->getName()
+                    'unique_hash' => md5($this->task->getName().$this->dateTime->format('Y-m-d H:i:00')),
+                    'task_name' => $this->task->getName(),
+                    'timing' => $this->dateTime->format('Y-m-d H:i:s'),
+                    'worker' => self::getThisWorker()
                 ]);
             }
             catch(\PDOException $e)
             {
                 /**
-                 * 23000 = SQLSTATE[23000]: Integrity constraint violation: 19 UNIQUE constraint failed
+                 * 23000 = SQLSTATE[23000]: Integrity constraint violation (primary key already exists)
                  */
                 if ($e->getCode() == "23000")
                 {
+                    // task already inserted -> abort
                     return false;
                 }
 
                 throw new LoadBalancedCronTaskException($e->getMessage());
             }
 
-            $taskResponse = $this->task->task();
-
-            // delete task from lbct_tasks
-            try
-            {
-                // wait some seconds before deleting the entry from the database and "unlock" it
-                if ($this->isTest === false)
-                {
-                    sleep($this->asyncBuffer);
-                }
-
-                $query = $this->pdo->prepare('DELETE FROM lbct_tasks WHERE task_running = :task_name');
-                $query->execute([
-                    'task_name' => $this->task->getName()
-                ]);
-            }
-            catch(\PDOException $e)
-            {
-                throw new LoadBalancedCronTaskException($e->getMessage());
-            }
-
-            return $taskResponse;
+            // run the task
+            return $this->task->task();
         }
 
         return false;

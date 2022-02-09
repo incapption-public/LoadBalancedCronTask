@@ -30,8 +30,10 @@ It's used for locking running tasks, to make sure that only on app instance coul
 
 ```sql
 CREATE TABLE IF NOT EXISTS `lbct_tasks` (
+`unique_hash` varchar(32) NOT NULL,
 `task_running` varchar(256) NOT NULL,
-`date_created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-PRIMARY KEY (`task_running`)
-) DEFAULT CHARSET=utf8;
+`timing` datetime NOT NULL,
+`worker` varchar(256),
+PRIMARY KEY (`unique_hash`)
+);
 ```
