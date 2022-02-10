@@ -107,6 +107,10 @@ class LoadBalancedCronTask
         {
             return $_SERVER['SERVER_ADDR'];
         }
+        else if (isset($_SERVER['HOSTNAME']))
+        {
+            return $_SERVER['HOSTNAME'];
+        }
 
         return "undefined";
     }
