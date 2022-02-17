@@ -232,7 +232,7 @@ class LoadBalancedCronTask
     {
         self::checkAlreadyScheduled();
 
-        if($this->timing->isEveryFiveMinutes())
+        if($this->timing->isEveryNthMinutes(5))
         {
             self::setInTime(true);
         }
@@ -244,7 +244,7 @@ class LoadBalancedCronTask
     {
         self::checkAlreadyScheduled();
 
-        if($this->timing->isEveryTenMinutes())
+        if($this->timing->isEveryNthMinutes(10))
         {
             self::setInTime(true);
         }
@@ -256,7 +256,7 @@ class LoadBalancedCronTask
     {
         self::checkAlreadyScheduled();
 
-        if($this->timing->isEveryFifteenMinutes())
+        if($this->timing->isEveryNthMinutes(15))
         {
             self::setInTime(true);
         }
@@ -268,7 +268,7 @@ class LoadBalancedCronTask
     {
         self::checkAlreadyScheduled();
 
-        if($this->timing->isEveryThirtyMinutes())
+        if($this->timing->isEveryNthMinutes(30))
         {
             self::setInTime(true);
         }

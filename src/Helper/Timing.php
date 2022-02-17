@@ -29,46 +29,21 @@ class Timing
         ];
     }
 
-    public function isEveryFiveMinutes(): bool
+    public function isEveryNthMinutes(int $minute): bool
     {
-        if($this->current['minute'] % 5 === 0)
+        if(is_int($minute) === false || $minute < 0 || $minute > 59)
+        {
+            throw new LoadBalancedCronTaskException('parameter must be an integer between 0 and 59.');
+        }
+
+        if($this->current['minute'] % $minute === 0)
         {
             return true;
         }
 
         return false;
     }
-
-    public function isEveryTenMinutes(): bool
-    {
-        if($this->current['minute'] % 10 === 0)
-        {
-            return true;
-        }
-
-        return false;
-    }
-
-    public function isEveryFifteenMinutes(): bool
-    {
-        if($this->current['minute'] % 15 === 0)
-        {
-            return true;
-        }
-
-        return false;
-    }
-
-    public function isEveryThirtyMinutes(): bool
-    {
-        if($this->current['minute'] % 30 === 0)
-        {
-            return true;
-        }
-
-        return false;
-    }
-
+    
     public function isHourAt(int $minute): bool
     {
         if(is_int($minute) === false || $minute < 0 || $minute > 59)
