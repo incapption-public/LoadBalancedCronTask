@@ -6,19 +6,14 @@ use DateTime;
 use Incapption\LoadBalancedCronTask\Abstracts\CronTaskAbstract;
 use Incapption\LoadBalancedCronTask\Enums\ProcessType;
 use Incapption\LoadBalancedCronTask\Exceptions\LoadBalancedCronTaskException;
-use MyCLabs\Enum\Enum;
+use Incapption\LoadBalancedCronTask\Helper\Timing;
 
 class LoadBalancedCronTask
 {
     /**
-     * @var bool
+     * @var ProcessType
      */
-    private $isTest = false;
-
-    /**
-     * @var Enum
-     */
-    private $type;
+    private $processType;
 
     /**
      * @var string
@@ -46,6 +41,26 @@ class LoadBalancedCronTask
     private $pdo = null;
 
     /**
+     * @var ?Timing
+     */
+    private $timing;
+
+    /**
+     * @var bool
+     */
+    private $alreadyScheduled;
+
+    /**
+     * @var false
+     */
+    private $hasProcessType;
+
+    /**
+     * @var string
+     */
+    private $workerName;
+
+    /**
      * @throws LoadBalancedCronTaskException
      */
     public function __construct()
@@ -53,6 +68,9 @@ class LoadBalancedCronTask
         $this->timezone = 'UTC';
         $this->task = null;
         $this->inTime = false;
+        $this->timing = null;
+        $this->alreadyScheduled = false;
+        $this->hasProcessType = false;
 
         self::setDateTime();
     }
@@ -75,6 +93,7 @@ class LoadBalancedCronTask
     {
         try {
             $this->dateTime = new DateTime($dateTime, new \DateTimeZone($this->timezone));
+            $this->timing = new Timing($this->dateTime);
         }
         catch(\Exception $e)
         {
@@ -97,25 +116,27 @@ class LoadBalancedCronTask
         }
     }
 
-    private function getThisWorker(): string
+    private function checkHasProcessType(): void
     {
-        if (isset($_SERVER['REMOTE_ADDR']))
+        if($this->hasProcessType === true)
         {
-            return $_SERVER['REMOTE_ADDR'];
-        }
-        else if (isset($_SERVER['SERVER_ADDR']))
-        {
-            return $_SERVER['SERVER_ADDR'];
-        }
-        else if (isset($_SERVER['HOSTNAME']))
-        {
-            return $_SERVER['HOSTNAME'];
+            throw new LoadBalancedCronTaskException('ProcessType already set => local(), loadBalanced()');
         }
 
-        return "undefined";
+        $this->hasProcessType = true;
     }
 
-    public function mockTestEnvironment(?string $sqlite, string $dateTime = 'now')
+    private function checkAlreadyScheduled(): void
+    {
+        if($this->alreadyScheduled === true)
+        {
+            throw new LoadBalancedCronTaskException('this task is already scheduled. You can not chain schedule functions.');
+        }
+
+        $this->alreadyScheduled = true;
+    }
+
+    public function mockTestEnvironment(?string $sqlite, string $dateTime = 'now'): LoadBalancedCronTask
     {
         if(!is_null($sqlite))
         {
@@ -133,8 +154,6 @@ class LoadBalancedCronTask
 
         self::setDateTime($dateTime);
 
-        $this->isTest = true;
-
         return $this;
     }
 
@@ -150,15 +169,15 @@ class LoadBalancedCronTask
 
     public function local(): LoadBalancedCronTask
     {
-        $this->type = ProcessType::LOCAL();
-
+        self::checkHasProcessType();
+        $this->processType = ProcessType::LOCAL();
         return $this;
     }
 
-    public function distributed(): LoadBalancedCronTask
+    public function loadBalanced(): LoadBalancedCronTask
     {
-        $this->type = ProcessType::DISTRIBUTED();
-
+        self::checkHasProcessType();
+        $this->processType = ProcessType::LOAD_BALANCED();
         return $this;
     }
 
@@ -188,6 +207,13 @@ class LoadBalancedCronTask
         return $this;
     }
 
+    public function setWorkerName(string $name): LoadBalancedCronTask
+    {
+        $this->workerName = $name;
+
+        return $this;
+    }
+
     public function task(CronTaskAbstract $task): LoadBalancedCronTask
     {
         $this->task = $task;
@@ -197,15 +223,16 @@ class LoadBalancedCronTask
 
     public function everyMinute(): LoadBalancedCronTask
     {
+        self::checkAlreadyScheduled();
         self::setInTime(true);
         return $this;
     }
 
     public function everyFiveMinutes(): LoadBalancedCronTask
     {
-        $currentMinute = intval($this->dateTime->format('i'));
+        self::checkAlreadyScheduled();
 
-        if($currentMinute % 5 === 0)
+        if($this->timing->isEveryFiveMinutes())
         {
             self::setInTime(true);
         }
@@ -215,9 +242,9 @@ class LoadBalancedCronTask
 
     public function everyTenMinutes(): LoadBalancedCronTask
     {
-        $currentMinute = intval($this->dateTime->format('i'));
+        self::checkAlreadyScheduled();
 
-        if($currentMinute % 10 === 0)
+        if($this->timing->isEveryTenMinutes())
         {
             self::setInTime(true);
         }
@@ -227,9 +254,9 @@ class LoadBalancedCronTask
 
     public function everyFifteenMinutes(): LoadBalancedCronTask
     {
-        $currentMinute = intval($this->dateTime->format('i'));
+        self::checkAlreadyScheduled();
 
-        if($currentMinute % 15 === 0)
+        if($this->timing->isEveryFifteenMinutes())
         {
             self::setInTime(true);
         }
@@ -239,9 +266,9 @@ class LoadBalancedCronTask
 
     public function everyThirtyMinutes(): LoadBalancedCronTask
     {
-        $currentMinute = intval($this->dateTime->format('i'));
+        self::checkAlreadyScheduled();
 
-        if($currentMinute % 30 === 0)
+        if($this->timing->isEveryThirtyMinutes())
         {
             self::setInTime(true);
         }
@@ -251,10 +278,9 @@ class LoadBalancedCronTask
 
     public function hourly(): LoadBalancedCronTask
     {
-        $currentHour = intval($this->dateTime->format('H'));
-        $currentMinute = intval($this->dateTime->format('i'));
+        self::checkAlreadyScheduled();
 
-        if(($currentHour >= 0 && $currentHour <= 23) && $currentMinute === 0)
+        if($this->timing->isHourAt(0))
         {
             self::setInTime(true);
         }
@@ -262,8 +288,59 @@ class LoadBalancedCronTask
         return $this;
     }
 
+    public function hourlyAt(int $minute): LoadBalancedCronTask
+    {
+        self::checkAlreadyScheduled();
+
+        if($this->timing->isHourAt($minute))
+        {
+            self::setInTime(true);
+        }
+
+        return $this;
+    }
+
+    public function monthly(): LoadBalancedCronTask
+    {
+        self::checkAlreadyScheduled();
+
+        if($this->timing->isMonthOn(1, '00:00'))
+        {
+            self::setInTime(true);
+        }
+        return $this;
+    }
+
+    public function monthlyOn(int $dayOfMonth, string $time): LoadBalancedCronTask
+    {
+        self::checkAlreadyScheduled();
+
+        if($this->timing->isMonthOn($dayOfMonth, $time))
+        {
+            self::setInTime(true);
+        }
+        return $this;
+    }
+
+    public function lastDayOfMonth(string $time = '00:00'): LoadBalancedCronTask
+    {
+        self::checkAlreadyScheduled();
+
+        if($this->timing->isLastDayOfMonthAt($time))
+        {
+            self::setInTime(true);
+        }
+        return $this;
+    }
+
     public function run(): bool
     {
+        // check if processType is set
+        if ($this->processType instanceof ProcessType === false)
+        {
+            throw new LoadBalancedCronTaskException('No processType is set. Choose between local() or loadBalanced()');
+        }
+
         // check if task has a name
         if (empty($this->task->getName()) || !is_string($this->task->getName()))
         {
@@ -272,21 +349,25 @@ class LoadBalancedCronTask
 
         // check if current task is in time
         if(self::isInTime() === false)
+        {
             return false;
+        }
 
-        if ($this->type->getValue() === ProcessType::LOCAL()->getValue())
+        if ($this->processType->getValue() === ProcessType::LOCAL()->getValue())
         {
             return $this->task->task();
         }
-        else if ($this->type->getValue() === ProcessType::DISTRIBUTED()->getValue())
+        else if ($this->processType->getValue() === ProcessType::LOAD_BALANCED()->getValue())
         {
             // try to insert the task into lbct_tasks
-            try {
-                $query = $this->pdo->prepare('INSERT INTO lbct_tasks (unique_hash, task_running, worker) VALUES (:unique_hash, :task_name, :worker)');
+            try
+            {
+                $query = $this->pdo->prepare('INSERT INTO lbct_tasks (unique_hash, task_running, worker) 
+                                                VALUES (:unique_hash, :task_name, :worker)');
                 $query->execute([
                     'unique_hash' => md5($this->task->getName().$this->dateTime->format('Y-m-d H:i:00')),
                     'task_name' => $this->task->getName(),
-                    'worker' => self::getThisWorker()
+                    'worker' => $this->workerName
                 ]);
             }
             catch(\PDOException $e)

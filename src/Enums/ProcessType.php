@@ -6,10 +6,10 @@ use MyCLabs\Enum\Enum;
 
 /**
  * @method static self LOCAL()
- * @method static self DISTRIBUTED()
+ * @method static self LOAD_BALANCED()
  */
 class ProcessType extends Enum
 {
     private const LOCAL = 'local';
-    private const DISTRIBUTED = 'distributed';
+    private const LOAD_BALANCED = 'loadBalanced';
 }
