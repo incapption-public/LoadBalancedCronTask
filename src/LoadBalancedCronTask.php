@@ -228,6 +228,32 @@ class LoadBalancedCronTask
         return $this;
     }
 
+    public function everyTwoMinutes(): LoadBalancedCronTask
+    {
+        self::checkAlreadyScheduled();
+
+        if($this->timing->isEveryNthMinutes(2))
+        {
+            self::setInTime(true);
+        }
+
+        return $this;
+    }
+
+    public function everyThreeMinutes(): LoadBalancedCronTask
+    {
+        self::checkAlreadyScheduled();
+
+        if($this->timing->isEveryNthMinutes(3))
+
+
+        {
+            self::setInTime(true);
+        }
+
+        return $this;
+    }
+
     public function everyFiveMinutes(): LoadBalancedCronTask
     {
         self::checkAlreadyScheduled();
@@ -386,6 +412,7 @@ class LoadBalancedCronTask
 
             // run the task
             return $this->task->task();
+
         }
 
         return false;

@@ -43,7 +43,7 @@ class Timing
 
         return false;
     }
-    
+
     public function isHourAt(int $minute): bool
     {
         if(is_int($minute) === false || $minute < 0 || $minute > 59)
