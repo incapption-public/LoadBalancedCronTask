@@ -33,7 +33,7 @@ $ composer require incapption/load-balanced-cron-task
 ### 1.2 Create MySQL Table
 
 This package needs a small table in your database. 
-It's used for locking running tasks, to make sure that only on app instance could run a distributed cron task.
+It's used for locking running tasks, to make sure that only on app instance could run it.
 
 ```sql
 CREATE TABLE IF NOT EXISTS `lbct_tasks` (
@@ -47,7 +47,7 @@ PRIMARY KEY (`unique_hash`)
 
 ### 1.3 Install Crontab
 
-The idea is that you have only a single cron task running every minute. 
+The idea is that you have only one single cron task running every minute. 
 This cron task contains all other tasks wrapped by **LoadBalancedCronTask**
 
 Open your crontab console (e.g. linux: ```crontab -e```)
@@ -139,4 +139,4 @@ $response = (new LoadBalancedCronTask())
 | ->monthlyOn(4, '15:00') | Run the task every month on the 4th at 15:00 |
 | ->lastDayOfMonth('15:00') | Run the task on the last day of the month at 15:00 |
 
-> Be careful with the days 29th, 30th, 31st if you use ***monthlyOn()***. Maybe use ***lastDayOfMonth()*** instead
+> Be careful with the days 29th, 30th, 31st if you use ***monthlyOn()***. Maybe use ***lastDayOfMonth()*** instead.
