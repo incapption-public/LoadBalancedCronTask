@@ -1,4 +1,4 @@
-:warning: This package is still in an early pre-alpha state
+:warning: This package is still in an early pre-alpha state. Feel free to test it.
 # Load Balanced Cron Task
 
 ## Introduction
