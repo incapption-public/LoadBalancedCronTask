@@ -1,5 +1,4 @@
-> :warning: This package is still in development
-___
+:warning: This package is still in development
 # Load Balanced Cron Task
 
 ## Introduction
