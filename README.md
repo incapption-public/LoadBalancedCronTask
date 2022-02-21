@@ -1,8 +1,10 @@
+> :warning: This package is still in development
+___
 # Load Balanced Cron Task
 
 ## Introduction
 This is a lightweight package for load balancing your cron tasks. It is used to distribute tasks 
-across a network of **identical servers** so that they are run only once and not multiple times. 
+across a network of **identical servers** to make sure they are run only once and not multiple times. 
 >It is important that your application network uses only one single central mysql database. 
 A table is created in the database in which current tasks are inserted. 
 A primary key ensures that the task only runs once (a kind of locking process).
@@ -46,7 +48,7 @@ PRIMARY KEY (`unique_hash`)
 
 ### 1.3 Install Crontab
 
-The idea is that you only have a single cron task running every minute. 
+The idea is that you have only a single cron task running every minute. 
 This cron task contains all other tasks wrapped by **LoadBalancedCronTask**
 
 Open your crontab console (e.g. linux: ```crontab -e```)
@@ -138,4 +140,4 @@ $response = (new LoadBalancedCronTask())
 | ->monthlyOn(4, '15:00') | Run the task every month on the 4th at 15:00 |
 | ->lastDayOfMonth('15:00') | Run the task on the last day of the month at 15:00 |
 
-> Caution: Be careful with the days 29th, 30th, 31st if you use ***monthlyOn()***. Maybe use ***lastDayOfMonth()*** instead
+> Be careful with the days 29th, 30th, 31st if you use ***monthlyOn()***. Maybe use ***lastDayOfMonth()*** instead
