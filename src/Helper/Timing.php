@@ -59,6 +59,19 @@ class Timing
         return false;
     }
 
+    public function isDailyAt(string $time): bool
+    {
+        $scheduledHour = self::parseTimeInput($time)['hour'];
+        $scheduledMinute = self::parseTimeInput($time)['minute'];
+
+        if($this->current['hour'] === $scheduledHour && $this->current['minute'] === $scheduledMinute)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     public function isMonthOn(int $dayOfMonth, string $time): bool
     {
         if(is_int($dayOfMonth) === false || $dayOfMonth < 1 || $dayOfMonth > 31)

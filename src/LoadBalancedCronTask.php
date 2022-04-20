@@ -326,6 +326,23 @@ class LoadBalancedCronTask
         return $this;
     }
 
+    public function daily(): LoadBalancedCronTask
+    {
+        return self::dailyAt();
+    }
+
+    public function dailyAt(string $time = '00:00'): LoadBalancedCronTask
+    {
+        self::checkAlreadyScheduled();
+
+        if($this->timing->isDailyAt($time))
+        {
+            self::setInTime(true);
+        }
+
+        return $this;
+    }
+
     public function monthly(): LoadBalancedCronTask
     {
         self::checkAlreadyScheduled();
