@@ -135,6 +135,8 @@ $response = (new LoadBalancedCronTask())
 | ->everyThirtyMinutes() | Run the task every thirty minutes |
 | ->hourly() | Run the task every hour |
 | ->hourlyAt(17) | Run the task every hour at 17 minutes past the hour |
+| ->daily() | Run the task every day at 00:00 |
+| ->dailyAt('17:13') | Run the task every day at 17:13 o'clock |
 | ->monthly() | Run the task on the first day of every month at 00:00 |
 | ->monthlyOn(4, '15:00') | Run the task every month on the 4th at 15:00 |
 | ->lastDayOfMonth('15:00') | Run the task on the last day of the month at 15:00 |
