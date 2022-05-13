@@ -1,4 +1,3 @@
-:warning: This package is still in an early pre-alpha state. Feel free to test it.
 # Load Balanced Cron Task
 
 ## Introduction
@@ -38,8 +37,9 @@ It's used for locking running tasks, to make sure that only on app instance coul
 ```sql
 CREATE TABLE IF NOT EXISTS `lbct_tasks` (
 `unique_hash` varchar(32) NOT NULL,
-`task_running` varchar(256) NOT NULL,
-`date_created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+`task` varchar(256) NOT NULL,
+`schedule` varchar(256) NOT NULL,
+`date_created` datetime NOT NULL,
 `worker` varchar(256),
 PRIMARY KEY (`unique_hash`)
 );
@@ -64,6 +64,7 @@ Maybe you want to integrate into your application, or you create a new plain fil
 
 use Incapption\LoadBalancedCronTask\Abstracts\CronTaskAbstract;
 use Incapption\LoadBalancedCronTask\LoadBalancedCronTask;
+use Incapption\LoadBalancedCronTask\Exceptions\LoadBalancedCronTaskException;
 
 require_once('./vendor/autoload.php');
 
@@ -81,14 +82,17 @@ class TestCronTask extends CronTaskAbstract
     }
 }
 
-$response = (new LoadBalancedCronTask())
-    ->mysql($_ENV['MYSQL_HOST'], $_ENV['MYSQL_USER'], $_ENV['MYSQL_PASSWORD'], $_ENV['MYSQL_DATABASE'])
-    ->setWorkerName('Node 1')
-    ->task((new TestCronTask()))
-    ->local()
-    ->everyMinute()
-    ->run();
-
+try {
+    $response = (new LoadBalancedCronTask())
+        ->mysql($_ENV['MYSQL_HOST'], $_ENV['MYSQL_USER'], $_ENV['MYSQL_PASSWORD'], $_ENV['MYSQL_DATABASE'])
+        ->setWorkerName('Node 1')
+        ->task((new TestCronTask()))
+        ->loadBalanced()
+        ->everyMinute()
+        ->run();
+} catch (LoadBalancedCronTaskException $e) {
+    exit($e->getMessage());
+}
 ```
 ___
 
@@ -100,13 +104,21 @@ Define the behavior in the ***task()*** method.
 Second create the load balanced cron task.
 
 ```php
-# Example
+# Example for a distributed load balanced cron task
  
 $response = (new LoadBalancedCronTask())
     ->mysql($_ENV['MYSQL_HOST'], $_ENV['MYSQL_USER'], $_ENV['MYSQL_PASSWORD'], $_ENV['MYSQL_DATABASE'])
     ->setWorkerName('Node 1')
     ->task((new TestCronTask()))
     ->loadBalanced()
+    ->everyMinute()
+    ->run();
+
+# Example for a local cron task
+ 
+$response = (new LoadBalancedCronTask())
+    ->task((new TestCronTask()))
+    ->local()
     ->everyMinute()
     ->run();
 ```
@@ -118,7 +130,7 @@ $response = (new LoadBalancedCronTask())
 | Method | Description |
 | ----------- | ----------- |
 | ->mysql(string $host, string $user, string $password, string $database) | Sets the mysql credentials for the underlying pdo instance |
-| ->setWorkerName(string $name) | Sets the name of teh current worker. Perhaps you will use a environment variable |
+| ->setWorkerName(string $name) | Sets the name of the current worker. Perhaps you will use a environment variable |
 | ->task(CronTaskAbstract $task) | Awaits an instance of CronTaskAbstract |
 | ->local() | Sets the cron task to ***local***. No distributing and load balancing is taken place. Useful for node specific tasks such as cleaning local tmp folder etc. |
 | ->loadBalanced() | Sets the cron task to ***load balanced***. The task is distributed around the network. Only one worker runs the task at a time. |
@@ -140,5 +152,11 @@ $response = (new LoadBalancedCronTask())
 | ->monthly() | Run the task on the first day of every month at 00:00 |
 | ->monthlyOn(4, '15:00') | Run the task every month on the 4th at 15:00 |
 | ->lastDayOfMonth('15:00') | Run the task on the last day of the month at 15:00 |
+| ->lastDayOfMonthOffset(2, '15:00') | Run the task on the last day of the month at 15:00 with an offset of 2 days. As an example: ***lastDayOfMonthOffset(2, '15:00')*** in january, which has 31 days, runs on the 29th at 15 o'clock|
 
-> Be careful with the days 29th, 30th, 31st if you use ***monthlyOn()***. Maybe use ***lastDayOfMonth()*** instead.
+> Be careful with the days 29th, 30th, 31st if you use ***monthlyOn()***. Maybe use ***lastDayOfMonth()*** or ***lastDayOfMonthOffset()*** instead.
+
+___
+
+### 3. Exceptions
+An instance of **LoadBalancedCronTask()** throws a **LoadBalancedCronTaskException** when there is something wrong inside the logic for everything else you can use the default **Exception**.
