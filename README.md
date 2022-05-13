@@ -7,7 +7,7 @@ across a network of **identical servers** to make sure they are run only once an
 A table is created in the database in which current tasks are inserted. 
 A primary key ensures that the task only runs once (a kind of locking process).
 > 
-> the ***unique_hash*** is a md5 hash of the task name and the current timestamp ***without*** seconds. With this, the nodes can run asynchronously but the task runs only once at a time.
+> the ***unique_hash*** is a md5 hash of the task name, the schedule and the current timestamp ***without*** seconds. With this, the nodes can run asynchronously but the task runs only once at a time.
 
 ---
 
