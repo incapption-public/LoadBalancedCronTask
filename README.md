@@ -36,12 +36,14 @@ It's used for locking running tasks, to make sure that only on app instance coul
 
 ```sql
 CREATE TABLE IF NOT EXISTS `lbct_tasks` (
+`id` int(11) NOT NULL AUTO_INCREMENT,
 `unique_hash` varchar(32) NOT NULL,
 `task` varchar(256) NOT NULL,
 `schedule` varchar(256) NOT NULL,
 `date_created` datetime NOT NULL,
 `worker` varchar(256),
-PRIMARY KEY (`unique_hash`)
+PRIMARY KEY (`unique_hash`),
+KEY `id` (`id`)
 );
 ```
 
