@@ -161,4 +161,4 @@ $response = (new LoadBalancedCronTask())
 ___
 
 ### 3. Exceptions
-An instance of **LoadBalancedCronTask()** throws a **LoadBalancedCronTaskException** when there is something wrong inside the logic for everything else you can use the default **Exception**.
+An instance of **LoadBalancedCronTask()** throws a **LoadBalancedCronTaskException** when there is something wrong inside the logic for everything else you can use the default **PHP Exceptions**.
