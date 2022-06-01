@@ -129,13 +129,13 @@ $response = (new LoadBalancedCronTask())
 
 #### General:
 
-| Method | Description |
-| ----------- | ----------- |
-| ->mysql(string $host, string $user, string $password, string $database) | Sets the mysql credentials for the underlying pdo instance |
-| ->setWorkerName(string $name) | Sets the name of the current worker. Perhaps you will use a environment variable |
-| ->task(CronTaskAbstract $task) | Awaits an instance of CronTaskAbstract |
-| ->local() | Sets the cron task to ***local***. No distributing and load balancing is taken place. Useful for node specific tasks such as cleaning local tmp folder etc. |
-| ->loadBalanced() | Sets the cron task to ***load balanced***. The task is distributed around the network. Only one worker runs the task at a time. |
+| Method | Description                                                                                                                                                  |
+| ----------- |--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ->mysql(string $host, string $user, string $password, string $database) | Sets the mysql credentials for the underlying pdo instance                                                                                                   |
+| ->setWorkerName(string $name) | Sets the name of the current worker. Perhaps you will use a environment variable                                                                             |
+| ->task(CronTaskAbstract $task) | Awaits an instance of CronTaskAbstract                                                                                                                       |
+| ->local() | Sets the cron task to ***local***. No distributing and load balancing is taking place. Useful for node specific tasks such as cleaning local tmp folder etc. |
+| ->loadBalanced() | Sets the cron task to ***load balanced***. The task is distributed around the network. Only one worker runs the task at a time.                              |
 
 #### Scheduling methods:
 
