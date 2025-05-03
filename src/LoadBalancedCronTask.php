@@ -178,10 +178,23 @@ class LoadBalancedCronTask
         string $user,
         string $password,
         string $database,
-        int $port = 3306
+        int $port = 3306,
+        bool $ssl = false,
+        array $sslOptions = []
     ): LoadBalancedCronTask {
+
+        if(!$ssl)
+        {
+            $sslOptions = [];
+        }
+
         try {
-            $this->pdo = new PDO('mysql:host='.$host.';port='.$port.';dbname='.$database, $user, $password);
+            $this->pdo = new PDO(
+                'mysql:host='.$host.';port='.$port.';dbname='.$database,
+                $user,
+                $password,
+                $sslOptions
+            );
             $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $this->pdo->exec("set names utf8");
         } catch (PDOException $e) {
